@@ -83,7 +83,7 @@ F -->|Fail| H[🗣 Browser Fallback Voice]
 | Murf AI          | Text-to-Speech (TTS)                |
 | FastAPI          | Backend API server                  |
 | HTML/CSS/JS      | UI for interaction and playback     |
-| MediaRecorder    | Echo Bot mic capture + playback     |
+| MediaRecorder    | LumeAI mic capture + playback     |
 | FormData         | Uploading audio blob to the backend |
 | AssemblyAI / STT | Transcribing recorded audio         |
 | Gemini API       | AI-generated conversation           |
