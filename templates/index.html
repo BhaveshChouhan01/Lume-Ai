@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>LumeAI - Voice Agent</title>
+  <link rel="stylesheet" href="/static/css/style.css?v=7">
+  <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+</head>
+<body>
+  <div class="hero">
+    <div class="echo-bot">
+      <h1>🪞 LumeAI</h1>
+      <p class="subtitle">Shining a light on every word you say.</p>
+
+      <!-- Single toggle record button -->
+      <div class="input-area">
+        <button id="recordBtn" class="round-btn">
+          🎙️
+        </button>
+      </div>
+      
+      <p id="uploadStatus" style="margin-top: 10px; font-style: italic;"></p>
+      
+      <h3>💬 Chat History</h3>
+      <div id="chatHistory">
+        <p><em>Conversation will appear here...</em></p>
+      </div>
+      
+      <!-- Hidden audio for AI replies -->
+      <audio id="echo-audio" hidden></audio>
+    </div>
+  </div>
+
+  <script src="/static/js/script.js?v=7"></script>
+</body>
+</html>
