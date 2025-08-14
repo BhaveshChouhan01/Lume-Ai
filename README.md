@@ -9,12 +9,6 @@
   <img src="https://img.shields.io/badge/Vanilla%20JS-ES6-yellow?logo=javascript" />
   <img src="https://img.shields.io/badge/Status-Active-brightgreen" />
 </p>
-<p align="center">
-  <img src="screenshots/chat-ui.png" width="700" />
-</p>
-<p align="center">
-  <img src="screenshots/Lume-Ai.png" width="700" />
-</p>
 
 ---
 
@@ -58,9 +52,14 @@ F -->|Fail| H[🗣 Browser Fallback Voice]
 
 ## 📸 Screenshots
 - 💬 LumeAI
-![alt text](Lume-Ai.png)
+<p align="center">
+  <img src="screenshots/chat-ui.png" width="700" />
+</p>
+
 - 🎙 Chat Interface
-![alt text](chat-ui.png)
+<p align="center">
+  <img src="screenshots/Lume-Ai.png" width="700" />
+</p>
 
 - 🚀 Now the voice agent **feels like a real app**, not just a prototype
 
