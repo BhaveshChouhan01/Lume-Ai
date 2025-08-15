@@ -1,0 +1,7 @@
+fastapi>=0.111
+uvicorn[standard]>=0.29
+python-dotenv>=1.0
+requests>=2.31
+google-generativeai>=0.7
+assemblyai>=0.31
+Jinja2>=3.1
