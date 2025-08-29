@@ -2,35 +2,173 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LumeAI - Voice Agent</title>
-  <link rel="stylesheet" href="/static/css/style.css?v=7">
-  <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+  <link rel="stylesheet" href="/static/css/style.css?v=13"> 
+  <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪞</text></svg>">
+  
+  
+  <!-- Base font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Pirate persona (Gothic/Medieval style font) -->
+  <link href="https://fonts.googleapis.com/css2?family=UnifrakturCook:wght@700&display=swap" rel="stylesheet">
+  
+  <!-- Cowboy persona (Rock Salt – hand-drawn western feel) -->
+  <link href="https://fonts.googleapis.com/css2?family=Rock+Salt&display=swap" rel="stylesheet">
+  
+  <!-- Robot persona (Share Tech Mono – futuristic monospaced) -->
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  
+  <!-- Professor persona (Merriweather – scholarly serif) -->
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div class="hero">
-    <div class="echo-bot">
-      <h1>🪞 LumeAI</h1>
-      <p class="subtitle">Shining a light on every word you say.</p>
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">🪞 LumeAI</div>
+    <button class="setup-btn" onclick="openSettings()">
+      ⚙️ Setup
+    </button>
+  </div>
 
-      <!-- Single toggle record button -->
-      <div class="input-area">
-        <button id="recordBtn" class="round-btn">
-          🎙️
-        </button>
+  <!-- Main Content -->
+  <div class="main-container">
+    <div class="hero">
+      <div class="echo-bot">
+        <h1>🪞 LumeAI</h1>
+        <p class="subtitle">Shining a light on every word you say.</p>
+
+        <!-- Enhanced Persona Selector -->
+        <div class="persona-area">
+          <label for="personaSelect">🎭 Choose Your AI Persona:</label>
+          <div class="select-wrapper">
+            <select id="personaSelect">
+              <option value="default">🧑 Normal Assistant</option>
+              <option value="madara">🔥 Madara Uchiha</option>
+              <option value="pirate">🏴‍☠️ Pirate Captain</option>
+              <option value="cowboy">🤠 Wild West Cowboy</option>
+              <option value="robot">🤖 Future Robot</option>
+              <option value="professor">🎓 Wise Professor</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Single toggle record button -->
+        <div class="input-area">
+          <button id="recordBtn" class="record-btn" title="Click to start/stop recording">🎙️</button>
+        </div>
+        
+        <p id="uploadStatus">Click the microphone to start talking</p>
+
+        <!-- Connection Status -->
+        <div style="text-align: center; margin: 1rem 0;">
+          <span class="status-indicator status-disconnected" id="statusIndicator"></span>
+          <span id="connectionStatus">Disconnected</span>
+        </div>
+
+        <h3 id="chatHeader">💬 Chat History (Persona: Normal Assistant)</h3>
+
+        <div id="chatHistory">
+          <div class="empty-state">
+            <p><em>🎤 Start recording to begin your conversation...</em></p>
+            <p><em>Configure your API keys in the setup menu above!</em></p>
+            <p><em>Choose a persona to change the AI's personality!</em></p>
+          </div>
+        </div>
+        
+        <!-- Hidden audio element for potential future use -->
+        <audio id="echo-audio" hidden></audio>
+        
+        <!-- Loading indicator (hidden by default) -->
+        <div id="loadingIndicator" class="loading-indicator">
+          <p>🔄 Processing your request...</p>
+        </div>
       </div>
-      
-      <p id="uploadStatus" style="margin-top: 10px; font-style: italic;"></p>
-      
-      <h3>💬 Chat History</h3>
-      <div id="chatHistory">
-        <p><em>Conversation will appear here...</em></p>
-      </div>
-      
-      <!-- Hidden audio for AI replies -->
-      <audio id="echo-audio" hidden></audio>
     </div>
   </div>
 
-  <script src="/static/js/script.js?v=7"></script>
+  <!-- Settings Modal - Updated form section -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title">⚙️ API Configuration</h2>
+      <button class="close-btn" onclick="closeSettings()">×</button>
+    </div>
+    
+    <form id="settingsForm">
+      <div class="form-group">
+        <label for="murfKey">🎵 MURF API Key</label>
+        <input type="password" id="murfKey" placeholder="Enter your Murf API key..." />
+        <small style="color: var(--text-secondary); font-size: 0.9rem; display: block; margin-top: 0.5rem;">
+          Used for text-to-speech voice generation
+        </small>
+      </div>
+
+      <div class="form-group">
+        <label for="assemblyKey">🎯 ASSEMBLY API Key</label>
+        <input type="password" id="assemblyKey" placeholder="Enter your AssemblyAI API key..." />
+        <small style="color: var(--text-secondary); font-size: 0.9rem; display: block; margin-top: 0.5rem;">
+          Used for speech-to-text transcription
+        </small>
+      </div>
+
+      <div class="form-group">
+        <label for="geminiKey">🤖 GEMINI API Key</label>
+        <input type="password" id="geminiKey" placeholder="Enter your Google Gemini API key..." />
+        <small style="color: var(--text-secondary); font-size: 0.9rem; display: block; margin-top: 0.5rem;">
+          Used for AI chat responses and conversations
+        </small>
+      </div>
+
+      <div class="form-group">
+        <label for="serverUrl">🌐 Server URL</label>
+        <input type="url" id="serverUrl" placeholder="http://localhost:8000" value="http://localhost:8000" />
+        <small style="color: var(--text-secondary); font-size: 0.9rem; display: block; margin-top: 0.5rem;">
+          Your LumeAI server endpoint
+        </small>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeSettings()">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="saveSettings()">Save Configuration</button>
+      </div>
+    </form>
+
+    <!-- API Key Help Section -->
+    <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+      <h4 style="margin: 0 0 0.5rem 0; color: #64B5F6;">📋 How to get API keys:</h4>
+      <ul style="margin: 0; padding-left: 1.5rem; font-size: 0.9rem; line-height: 1.4;">
+        <li><strong>Murf:</strong> Sign up at <a href="https://murf.ai" target="_blank" style="color: #81C784;">murf.ai</a> and get API key from dashboard</li>
+        <li><strong>AssemblyAI:</strong> Create account at <a href="https://assemblyai.com" target="_blank" style="color: #81C784;">assemblyai.com</a></li>
+        <li><strong>Google Gemini:</strong> Get key from <a href="https://makersuite.google.com/app/apikey" target="_blank" style="color: #81C784;">Google AI Studio</a></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+  <script src="/static/js/script.js?v=13"></script>
+  
+  <!-- Simple analytics/debug info -->
+  <script>
+    console.log("🚀 LumeAI Voice Agent loaded successfully!");
+    console.log("📊 Available features:");
+    console.log("  - Real-time speech transcription");
+    console.log("  - Multiple AI personas");
+    console.log("  - Text-to-speech responses");
+    console.log("  - Persistent chat history");
+    
+    // Debug function accessible from browser console
+    window.debugLumeAI = function() {
+      console.log("🔧 Debug Info:");
+      console.log("  Session ID:", window.sessionId || "Not available");
+      console.log("  Current Persona:", document.getElementById('personaSelect')?.value || "Unknown");
+      console.log("  Recording Status:", window.isRecording || false);
+      console.log("  WebSocket Status:", window.ws?.readyState || "Not connected");
+    };
+    
+    // Make session ID available globally for debugging
+    window.sessionId = Math.random().toString(36).substring(7);
+  </script>
 </body>
 </html>
