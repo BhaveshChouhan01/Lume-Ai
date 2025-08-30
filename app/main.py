@@ -57,12 +57,6 @@ CHAT_HISTORY: dict[str, list[dict[str, str]]] = {}
 SESSION_PERSONA: dict[str, str] = {}
 SESSION_API_KEYS: dict[str, dict[str, str]] = {}
 
-# Initialize services
-llm_service = LLMService()
-tts_service = TTSService()
-skills_service = SkillsService()
-intent_service = IntentService()
-
 @app.get("/health")
 async def health_check():
     return {
@@ -117,9 +111,36 @@ class QueueAudioStreamer:
         if self.thread and self.thread.is_alive():
             self.thread.join(timeout=2)
 
+def get_api_key(user_keys: dict, key_name: str, fallback_env: str = None) -> str:
+    """Get API key from user input or environment variables"""
+    # Try user provided key first
+    user_key = user_keys.get(key_name, "").strip()
+    if user_key:
+        return user_key
+    
+    # Fallback to environment variable
+    if fallback_env:
+        env_key = os.getenv(fallback_env, "").strip()
+        if env_key:
+            return env_key
+    
+    return ""
+
 async def process_transcript_with_skills(session_id: str, text: str, ws_callback=None, api_keys=None):
     """Process user transcript using skills and LLM"""
     try:
+        # Initialize services with proper API keys
+        llm_service = LLMService()
+        tts_service = TTSService()
+        skills_service = SkillsService()
+        intent_service = IntentService()
+        
+        # Update skills service with API keys from user or environment
+        if api_keys:
+            skills_service.weather_api_key = get_api_key(api_keys, 'weather_key', 'WEATHER_API_KEY')
+            skills_service.news_api_key = get_api_key(api_keys, 'news_key', 'NEWS_API_KEY')
+            skills_service.tmdb_api_key = get_api_key(api_keys, 'tmdb_key', 'TMDB_API_KEY')
+
         # Add user message to chat history
         history = CHAT_HISTORY.setdefault(session_id, [])
         history.append({"role": "user", "content": text})
@@ -141,8 +162,9 @@ async def process_transcript_with_skills(session_id: str, text: str, ws_callback
                 await ws_callback({"type": "llm_response", "text": skill_response, "source": "skill"})
             
             # THEN send to TTS
-            if api_keys and api_keys.get('murf_key'):
-                await tts_service.stream_tts(skill_response, ws_callback, api_keys.get('murf_key'))
+            murf_key = get_api_key(api_keys, 'murf_key', 'MURF_API_KEY') if api_keys else ""
+            if murf_key:
+                await tts_service.stream_tts(skill_response, ws_callback, murf_key)
             
             return
 
@@ -157,7 +179,7 @@ async def process_transcript_with_skills(session_id: str, text: str, ws_callback
         conversation_prompt += "\nAssistant: "
 
         # Get Gemini API key from user or fallback to environment
-        gemini_key = (api_keys and api_keys.get('gemini_key')) or config.GEMINI_API_KEY
+        gemini_key = get_api_key(api_keys, 'gemini_key', 'GEMINI_API_KEY') if api_keys else config.GEMINI_API_KEY
         if not gemini_key:
             raise ValueError("No Gemini API key available")
 
@@ -177,8 +199,9 @@ async def process_transcript_with_skills(session_id: str, text: str, ws_callback
                 await ws_callback({"type": "llm_response", "text": collected_text, "source": "llm"})
 
         # Generate audio
-        if api_keys and api_keys.get('murf_key') and collected_text:
-            await tts_service.stream_tts(collected_text, ws_callback, api_keys.get('murf_key'))
+        murf_key = get_api_key(api_keys, 'murf_key', 'MURF_API_KEY') if api_keys else ""
+        if murf_key and collected_text:
+            await tts_service.stream_tts(collected_text, ws_callback, murf_key)
 
     except Exception as e:
         log.exception(f"Processing error: {e}")
@@ -186,6 +209,7 @@ async def process_transcript_with_skills(session_id: str, text: str, ws_callback
         if ws_callback:
             await ws_callback({"type": "error", "message": error_message})
         # Add error to history
+        history = CHAT_HISTORY.setdefault(session_id, [])
         history.append({"role": "assistant", "content": error_message})
 
 @app.websocket("/ws/stream")
@@ -199,13 +223,16 @@ async def ws_stream(websocket: WebSocket):
         'murf_key': websocket.query_params.get("murf_key", "").strip(),
         'assembly_key': websocket.query_params.get("assembly_key", "").strip(),
         'gemini_key': websocket.query_params.get("gemini_key", "").strip(),
+        'weather_key': websocket.query_params.get("weather_key", "").strip(),
+        'news_key': websocket.query_params.get("news_key", "").strip(),
+        'tmdb_key': websocket.query_params.get("tmdb_key", "").strip(),
     }
     
     # Store API keys for this session
     SESSION_API_KEYS[session_id] = user_api_keys
     
     # Use user's AssemblyAI key or fallback to environment
-    assembly_key = user_api_keys.get('assembly_key') or config.ASSEMBLYAI_API_KEY
+    assembly_key = get_api_key(user_api_keys, 'assembly_key', 'ASSEMBLYAI_API_KEY')
     
     # Fallback unknown personas to default
     if persona_key not in config.PERSONAS:
@@ -217,9 +244,19 @@ async def ws_stream(websocket: WebSocket):
     if not assembly_key:
         await websocket.send_text(json.dumps({
             "type": "error", 
-            "message": "Missing AssemblyAI API key"
+            "message": "Missing AssemblyAI API key. Please configure it in settings or set ASSEMBLYAI_API_KEY environment variable."
         }))
-        await websocket.close()
+        await websocket.close(code=4000, reason="Missing API key")
+        return
+
+    # Validate Gemini key as well since it's required for responses
+    gemini_key = get_api_key(user_api_keys, 'gemini_key', 'GEMINI_API_KEY')
+    if not gemini_key:
+        await websocket.send_text(json.dumps({
+            "type": "error", 
+            "message": "Missing Gemini API key. Please configure it in settings or set GEMINI_API_KEY environment variable."
+        }))
+        await websocket.close(code=4001, reason="Missing Gemini key")
         return
 
     loop = asyncio.get_running_loop()
@@ -228,18 +265,25 @@ async def ws_stream(websocket: WebSocket):
         try:
             if websocket.client_state.name != "DISCONNECTED":
                 await websocket.send_text(json.dumps(payload))
-        except Exception:
-            pass
+        except Exception as e:
+            log.warning(f"Failed to send WebSocket message: {e}")
 
     def sync_ws_send(payload: dict):
         asyncio.run_coroutine_threadsafe(ws_send(payload), loop)
 
     seen_texts = set()
-    client = StreamingClient(StreamingClientOptions(api_key=assembly_key))
+    
+    try:
+        client = StreamingClient(StreamingClientOptions(api_key=assembly_key))
+    except Exception as e:
+        log.error(f"Failed to create AssemblyAI client: {e}")
+        await ws_send({"type": "error", "message": "Invalid AssemblyAI API key"})
+        await websocket.close(code=4002, reason="Invalid AssemblyAI key")
+        return
 
     # AssemblyAI handlers
     def on_begin(client, event):
-        sync_ws_send({"type": "info", "message": f"AAI session started with {persona_key} persona"})
+        sync_ws_send({"type": "info", "message": f"Connected with {persona_key} persona"})
 
     def on_turn(client, event):
         if not event.end_of_turn or not getattr(event, "turn_is_formatted", False):
@@ -266,7 +310,7 @@ async def ws_stream(websocket: WebSocket):
 
     def on_error(client, error):
         log.error(f"AssemblyAI error: {error}")
-        sync_ws_send({"type": "error", "message": str(error)})
+        sync_ws_send({"type": "error", "message": f"Speech recognition error: {str(error)}"})
 
     client.on(StreamingEvents.Begin, on_begin)
     client.on(StreamingEvents.Turn, on_turn)
@@ -284,10 +328,11 @@ async def ws_stream(websocket: WebSocket):
         )
         client.connect(params)
         log.info(f"Connected to AssemblyAI with persona: {persona_key}")
+        await ws_send({"type": "info", "message": "Ready to process audio"})
     except Exception as e:
         log.error(f"AAI connection failed: {e}")
-        await ws_send({"type": "error", "message": "AAI connection failed"})
-        await websocket.close()
+        await ws_send({"type": "error", "message": f"Speech recognition connection failed: {str(e)}"})
+        await websocket.close(code=4003, reason="AssemblyAI connection failed")
         return
 
     # Audio forwarding setup
@@ -308,7 +353,8 @@ async def ws_stream(websocket: WebSocket):
                         streamer.send(msg["bytes"])
                     else:
                         send_fn(msg["bytes"])
-                except Exception:
+                except Exception as e:
+                    log.warning(f"Audio send error: {e}")
                     break
 
             elif "text" in msg and msg["text"]:
@@ -367,14 +413,17 @@ async def reset_session(session_id: str):
 # Skill API endpoints
 @app.get("/api/weather")
 async def weather(city: str = Query(..., description="City name")):
+    skills_service = SkillsService()
     return await skills_service.get_weather(city)
 
 @app.get("/api/news")
 async def news(query: str = Query(..., description="News search query")):
+    skills_service = SkillsService()
     return await skills_service.get_news(query)
 
 @app.get("/api/movies")
 async def movies(query: str = Query(..., description="Movie search query")):
+    skills_service = SkillsService()
     return await skills_service.search_movies(query)
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-// static/js/script.js - Cleaned and Optimized
+// static/js/script.js - Fixed version
 console.log("✅ LumeAI streaming script loaded");
 
 let captureCtx = null;
@@ -22,15 +22,14 @@ const statusIndicator = document.getElementById("statusIndicator");
 const personaSelect = document.getElementById("personaSelect");
 const chatHeader = document.getElementById("chatHeader");
 
-// API Configuration
+// API Configuration - removed serverUrl as it's not needed
 let apiConfig = {
   murfKey: "",
   assemblyKey: "",
   geminiKey: "",
   weatherKey: "",
   newsKey: "",
-  tmdbKey: "",
-  serverUrl: "http://localhost:8000"
+  tmdbKey: ""
 };
 
 // Audio playback state
@@ -48,10 +47,10 @@ function loadSettings() {
       const savedConfig = JSON.parse(saved);
       apiConfig = { ...apiConfig, ...savedConfig };
       
-      // Populate form fields
+      // Populate form fields - removed serverUrl
       const fields = [
         'murfKey', 'assemblyKey', 'geminiKey', 
-        'weatherKey', 'newsKey', 'tmdbKey', 'serverUrl'
+        'weatherKey', 'newsKey', 'tmdbKey'
       ];
       
       fields.forEach(field => {
@@ -67,7 +66,7 @@ function loadSettings() {
 }
 
 function updateConfigStatus() {
-  const hasRequiredKeys = apiConfig.assemblyKey && apiConfig.geminiKey && apiConfig.serverUrl;
+  const hasRequiredKeys = apiConfig.assemblyKey && apiConfig.geminiKey;
   
   if (hasRequiredKeys) {
     updateConnectionStatus('status-ready', 'Configuration Ready');
@@ -88,28 +87,22 @@ function updateEmptyStateMessage(message) {
 }
 
 function saveSettings() {
-  // Get form values
+  // Get form values - removed serverUrl
   const murfKey = document.getElementById('murfKey')?.value.trim() || '';
   const assemblyKey = document.getElementById('assemblyKey')?.value.trim() || '';
   const geminiKey = document.getElementById('geminiKey')?.value.trim() || '';
   const weatherKey = document.getElementById('weatherKey')?.value.trim() || '';
   const newsKey = document.getElementById('newsKey')?.value.trim() || '';
   const tmdbKey = document.getElementById('tmdbKey')?.value.trim() || '';
-  const serverUrl = document.getElementById('serverUrl')?.value.trim() || 'http://localhost:8000';
 
-  // Basic validation
-  if (!assemblyKey || !geminiKey || !serverUrl) {
-    alert('⚠️ Please provide at least AssemblyAI, Gemini API keys and server URL');
+  // Basic validation - removed serverUrl validation
+  if (!assemblyKey || !geminiKey) {
+    alert('⚠️ Please provide at least AssemblyAI and Gemini API keys');
     return;
   }
 
-  if (!serverUrl.startsWith('http')) {
-    alert('⚠️ Server URL must start with http:// or https://');
-    return;
-  }
-
-  // Update configuration
-  apiConfig = { murfKey, assemblyKey, geminiKey, weatherKey, newsKey, tmdbKey, serverUrl };
+  // Update configuration - removed serverUrl
+  apiConfig = { murfKey, assemblyKey, geminiKey, weatherKey, newsKey, tmdbKey };
 
   // Save to localStorage
   try {
@@ -121,7 +114,7 @@ function saveSettings() {
     
     if (statusEl) statusEl.textContent = '✅ Configuration saved! Ready to record';
     
-    console.log('📁 Settings saved successfully');
+    console.log('📝 Settings saved successfully');
     
   } catch (error) {
     console.error('Error saving settings:', error);
@@ -145,6 +138,17 @@ function closeSettings() {
 function updateConnectionStatus(status, message) {
   if (connectionStatus) connectionStatus.textContent = message;
   if (statusIndicator) statusIndicator.className = `status-indicator ${status}`;
+}
+
+/* =============================================================================
+   WebSocket URL Helper
+============================================================================= */
+
+function getWebSocketUrl() {
+  // Use current page's host for WebSocket connection
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const host = window.location.host;
+  return `${protocol}//${host}`;
 }
 
 /* =============================================================================
@@ -327,11 +331,9 @@ async function startRecording() {
     sourceNode = captureCtx.createMediaStreamSource(stream);
     processor = captureCtx.createScriptProcessor(4096, 1, 1);
 
-    // Build WebSocket URL with API keys
+    // Build WebSocket URL - use dynamic host instead of serverUrl
     const persona = personaSelect ? personaSelect.value : "default";
-    const serverUrl = apiConfig.serverUrl || 'http://localhost:8000';
-    const wsProtocol = serverUrl.startsWith('https') ? 'wss' : 'ws';
-    const wsHost = serverUrl.replace(/^https?:\/\//, '');
+    const wsBaseUrl = getWebSocketUrl();
     
     const params = new URLSearchParams({
       session: sessionId,
@@ -344,16 +346,16 @@ async function startRecording() {
       tmdb_key: apiConfig.tmdbKey || ''
     });
     
-    const wsUrl = `${wsProtocol}://${wsHost}/ws/stream?${params}`;
+    const wsUrl = `${wsBaseUrl}/ws/stream?${params}`;
     
-    console.log(`🎭 Connecting with persona: ${persona}`);
+    console.log(`Connecting with persona: ${persona}`);
     
     ws = new WebSocket(wsUrl);
     ws.binaryType = "arraybuffer";
 
     ws.onopen = () => {
-      console.log("✅ WebSocket connected");
-      updateStatus("🎙️ Listening...");
+      console.log("WebSocket connected");
+      updateStatus("Listening...");
       updateConnectionStatus('status-connected', 'Connected');
       
       // Start audio processing
@@ -381,14 +383,14 @@ async function startRecording() {
 
   } catch (err) {
     console.error("Error starting recording:", err);
-    updateStatus("❌ Microphone access denied or not available", true);
+    updateStatus("Microphone access denied or not available", true);
     updateConnectionStatus('status-error', 'Microphone Error');
   }
 }
 
 function stopRecording() {
   if (ws && ws.readyState === WebSocket.OPEN) {
-    console.log("📤 Sending stop signal");
+    console.log("Sending stop signal");
     try {
       ws.send("__stop");
       ws.close();
@@ -426,7 +428,7 @@ function stopRecording() {
   isRecording = false;
   recordBtn.classList.remove("recording");
   recordBtn.textContent = "🎙️";
-  updateStatus("⏳ Processing...");
+  updateStatus("Processing...");
 }
 
 /* =============================================================================
@@ -436,11 +438,11 @@ function stopRecording() {
 function handleWebSocketMessage(event) {
   try {
     const data = JSON.parse(event.data);
-    console.log("📨 WebSocket message:", data.type);
+    console.log("WebSocket message:", data.type);
     
     switch (data.type) {
       case "transcript":
-        updateStatus(`📝 ${data.text}`);
+        updateStatus(`${data.text}`);
         if (data.end_of_turn) {
           appendChatMessage("You", data.text);
         }
@@ -452,18 +454,18 @@ function handleWebSocketMessage(event) {
         
       case "llm_chunk":
         // Real-time streaming - could update a partial response area
-        console.log("🧠 LLM chunk:", data.text);
+        console.log("LLM chunk:", data.text);
         break;
         
       case "audio_start":
-        console.log("🎬 Audio generation started");
+        console.log("Audio generation started");
         resetAudioChunks();
         currentAudioSession = data.context_id;
-        updateStatus("🎵 Generating audio...");
+        updateStatus("Generating audio...");
         break;
         
       case "audio_chunk":
-        console.log(`🎵 Audio chunk #${data.chunk_number}`);
+        console.log(`Audio chunk #${data.chunk_number}`);
         if (data.audio) {
           audioChunks.push({
             data: data.audio,
@@ -475,30 +477,30 @@ function handleWebSocketMessage(event) {
         break;
         
       case "audio_complete":
-        console.log(`🏁 Audio complete - ${data.total_chunks} chunks`);
-        updateStatus("✅ Ready to record");
+        console.log(`Audio complete - ${data.total_chunks} chunks`);
+        updateStatus("Ready to record");
         break;
         
       case "audio_error":
-        console.error("❌ Audio error:", data.message);
-        updateStatus(`❌ Audio error: ${data.message}`, true);
+        console.error("Audio error:", data.message);
+        updateStatus(`Audio error: ${data.message}`, true);
         break;
         
       case "error":
         console.error("Server error:", data.message);
-        updateStatus(`❌ ${data.message}`, true);
+        updateStatus(`${data.message}`, true);
         if (data.message.includes('API key') || data.message.includes('Missing')) {
-          alert('🔑 API Key Error: Please check your configuration.');
+          alert('API Key Error: Please check your configuration.');
           openSettings();
         }
         break;
         
       case "info":
-        updateStatus(`ℹ️ ${data.message}`);
+        updateStatus(`${data.message}`);
         break;
         
       default:
-        console.log("📨 Unknown message type:", data.type, data);
+        console.log("Unknown message type:", data.type, data);
     }
     
   } catch (err) {
@@ -508,7 +510,7 @@ function handleWebSocketMessage(event) {
 
 function handleWebSocketError(error) {
   console.error("WebSocket error:", error);
-  updateStatus("❌ Connection error - Check your configuration", true);
+  updateStatus("Connection error - Check your configuration", true);
   updateConnectionStatus('status-error', 'Connection Error');
 }
 
@@ -541,7 +543,7 @@ if (recordBtn) {
 if (personaSelect && chatHeader) {
   personaSelect.addEventListener("change", () => {
     const personaLabel = personaSelect.options[personaSelect.selectedIndex].text;
-    chatHeader.textContent = `💬 Chat History (${personaLabel})`;
+    chatHeader.textContent = `Chat History (${personaLabel})`;
     
     // Apply body class for styling
     document.body.className = "";
@@ -559,7 +561,7 @@ if (personaSelect && chatHeader) {
   
   // Initialize header
   const initialPersonaLabel = personaSelect.options[personaSelect.selectedIndex].text;
-  chatHeader.textContent = `💬 Chat History (${initialPersonaLabel})`;
+  chatHeader.textContent = `Chat History (${initialPersonaLabel})`;
 }
 
 /* =============================================================================

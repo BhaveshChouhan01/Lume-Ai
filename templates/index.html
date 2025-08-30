@@ -4,23 +4,22 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>LumeAI - Voice Agent</title>
-  <link rel="stylesheet" href="/static/css/style.css?v=13"> 
+  <link rel="stylesheet" href="/static/css/style.css?v=15"> 
   <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪞</text></svg>">
-  
   
   <!-- Base font -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   
-  <!-- Pirate persona (Gothic/Medieval style font) -->
+  <!-- Pirate persona -->
   <link href="https://fonts.googleapis.com/css2?family=UnifrakturCook:wght@700&display=swap" rel="stylesheet">
   
-  <!-- Cowboy persona (Rock Salt – hand-drawn western feel) -->
+  <!-- Cowboy persona -->
   <link href="https://fonts.googleapis.com/css2?family=Rock+Salt&display=swap" rel="stylesheet">
   
-  <!-- Robot persona (Share Tech Mono – futuristic monospaced) -->
+  <!-- Robot persona -->
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
   
-  <!-- Professor persona (Merriweather – scholarly serif) -->
+  <!-- Professor persona -->
   <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -88,7 +87,7 @@
     </div>
   </div>
 
-  <!-- Settings Modal - Updated form section -->
+  <!-- Settings Modal - Updated without server URL -->
 <div class="modal-overlay" id="settingsModal">
   <div class="modal">
     <div class="modal-header">
@@ -98,15 +97,7 @@
     
     <form id="settingsForm">
       <div class="form-group">
-        <label for="murfKey">🎵 MURF API Key</label>
-        <input type="password" id="murfKey" placeholder="Enter your Murf API key..." />
-        <small style="color: var(--text-secondary); font-size: 0.9rem; display: block; margin-top: 0.5rem;">
-          Used for text-to-speech voice generation
-        </small>
-      </div>
-
-      <div class="form-group">
-        <label for="assemblyKey">🎯 ASSEMBLY API Key</label>
+        <label for="assemblyKey">🎯 ASSEMBLY API Key (Required)</label>
         <input type="password" id="assemblyKey" placeholder="Enter your AssemblyAI API key..." />
         <small style="color: var(--text-secondary); font-size: 0.9rem; display: block; margin-top: 0.5rem;">
           Used for speech-to-text transcription
@@ -114,7 +105,7 @@
       </div>
 
       <div class="form-group">
-        <label for="geminiKey">🤖 GEMINI API Key</label>
+        <label for="geminiKey">🤖 GEMINI API Key (Required)</label>
         <input type="password" id="geminiKey" placeholder="Enter your Google Gemini API key..." />
         <small style="color: var(--text-secondary); font-size: 0.9rem; display: block; margin-top: 0.5rem;">
           Used for AI chat responses and conversations
@@ -122,10 +113,34 @@
       </div>
 
       <div class="form-group">
-        <label for="serverUrl">🌐 Server URL</label>
-        <input type="url" id="serverUrl" placeholder="http://localhost:8000" value="http://localhost:8000" />
+        <label for="murfKey">🎵 MURF API Key (Optional)</label>
+        <input type="password" id="murfKey" placeholder="Enter your Murf API key..." />
         <small style="color: var(--text-secondary); font-size: 0.9rem; display: block; margin-top: 0.5rem;">
-          Your LumeAI server endpoint
+          Used for text-to-speech voice generation
+        </small>
+      </div>
+
+      <div class="form-group">
+        <label for="weatherKey">🌤️ Weather API Key (Optional)</label>
+        <input type="password" id="weatherKey" placeholder="Enter your WeatherAPI key..." />
+        <small style="color: var(--text-secondary); font-size: 0.9rem; display: block; margin-top: 0.5rem;">
+          Used for weather information queries
+        </small>
+      </div>
+
+      <div class="form-group">
+        <label for="newsKey">📰 News API Key (Optional)</label>
+        <input type="password" id="newsKey" placeholder="Enter your NewsAPI key..." />
+        <small style="color: var(--text-secondary); font-size: 0.9rem; display: block; margin-top: 0.5rem;">
+          Used for news and current events
+        </small>
+      </div>
+
+      <div class="form-group">
+        <label for="tmdbKey">🎬 TMDB API Key (Optional)</label>
+        <input type="password" id="tmdbKey" placeholder="Enter your TMDB API key..." />
+        <small style="color: var(--text-secondary); font-size: 0.9rem; display: block; margin-top: 0.5rem;">
+          Used for movie and entertainment queries
         </small>
       </div>
 
@@ -139,15 +154,18 @@
     <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
       <h4 style="margin: 0 0 0.5rem 0; color: #64B5F6;">📋 How to get API keys:</h4>
       <ul style="margin: 0; padding-left: 1.5rem; font-size: 0.9rem; line-height: 1.4;">
-        <li><strong>Murf:</strong> Sign up at <a href="https://murf.ai" target="_blank" style="color: #81C784;">murf.ai</a> and get API key from dashboard</li>
         <li><strong>AssemblyAI:</strong> Create account at <a href="https://assemblyai.com" target="_blank" style="color: #81C784;">assemblyai.com</a></li>
         <li><strong>Google Gemini:</strong> Get key from <a href="https://makersuite.google.com/app/apikey" target="_blank" style="color: #81C784;">Google AI Studio</a></li>
+        <li><strong>Murf:</strong> Sign up at <a href="https://murf.ai" target="_blank" style="color: #81C784;">murf.ai</a> and get API key from dashboard</li>
+        <li><strong>WeatherAPI:</strong> Get free key at <a href="https://weatherapi.com" target="_blank" style="color: #81C784;">weatherapi.com</a></li>
+        <li><strong>NewsAPI:</strong> Get free key at <a href="https://newsapi.org" target="_blank" style="color: #81C784;">newsapi.org</a></li>
+        <li><strong>TMDB:</strong> Get free key at <a href="https://themoviedb.org/settings/api" target="_blank" style="color: #81C784;">themoviedb.org</a></li>
       </ul>
     </div>
   </div>
 </div>
 
-  <script src="/static/js/script.js?v=13"></script>
+  <script src="/static/js/script.js?v=14"></script>
   
   <!-- Simple analytics/debug info -->
   <script>
