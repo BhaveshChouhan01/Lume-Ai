@@ -69,7 +69,7 @@ class LLMService:
     async def stream_response(
         self, 
         prompt: str, 
-        model: str = "gemini-2.5-flash",
+        model: str = "gemini-2.0-flash-exp",
         api_key: str = None,
         system_instruction: str = None,
         generation_config: dict = None
@@ -103,7 +103,7 @@ class LLMService:
     async def generate_response(
         self, 
         prompt: str, 
-        model: str = "gemini-2.5-flash",
+        model: str = "gemini-2.0-flash-exp",
         api_key: str = None
     ) -> Optional[str]:
         """Generate single response (non-streaming)"""
