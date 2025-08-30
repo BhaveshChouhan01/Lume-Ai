@@ -10,6 +10,6 @@ jinja2>=3.1.2
 aiofiles>=23.2.1
 pydantic>=2.4.0
 asyncio-throttle>=1.0.2
-google-genai>=1.31.0
+
 # Optional: Add gunicorn for production
 gunicorn>=21.2.0
